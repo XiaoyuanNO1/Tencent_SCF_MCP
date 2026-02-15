@@ -1,0 +1,33 @@
+service: adp-mcp-orchestrator
+
+provider:
+  name: tencent
+  runtime: Python3.9
+  credentials: ~/.tencent/credentials
+  region: ap-guangzhou
+
+functions:
+  mcp:
+    handler: index.main_handler
+    description: ADP多Agent协同MCP服务
+    memorySize: 512
+    timeout: 30
+    environment:
+      variables:
+        REGION: ap-guangzhou
+    events:
+      - apigw:
+          name: mcp-api
+          parameters:
+            serviceId:
+            protocols:
+              - http
+              - https
+            environment: release
+            endpoints:
+              - path: /mcp
+                method: POST
+                enableCORS: true
+
+plugins:
+  - serverless-tencent-scf
