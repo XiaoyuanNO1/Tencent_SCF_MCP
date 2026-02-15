@@ -4,23 +4,30 @@ from orchestrator import handle_multi_agent_chat
 
 def main_handler(event, context):
     """
-    腾讯云函数入口 - 处理API网关触发器请求
+    腾讯云函数入口 - 同时支持事件函数（API网关触发）和Web函数模式
     """
     try:
-        # API网关触发器的event结构：
-        # {
-        #   "body": "{\"method\":\"tools/list\"}",  // body是JSON字符串
-        #   "headers": {...},
-        #   "httpMethod": "POST",
-        #   ...
-        # }
+        # 判断函数类型
+        # Web函数：event中有 path, httpMethod, headers, body 等字段，且 requestContext 为 None 或不存在
+        # 事件函数（API网关触发）：event中有 requestContext 字段
         
-        # 解析body（API网关传递的body是字符串）
-        body_str = event.get('body', '{}')
-        if isinstance(body_str, str):
-            body = json.loads(body_str)
+        is_web_function = event.get('requestContext') is None
+        
+        # 解析body
+        if is_web_function:
+            # Web函数：body可能是字符串或已解析的对象
+            body_str = event.get('body', '{}')
+            if isinstance(body_str, str):
+                body = json.loads(body_str) if body_str else {}
+            else:
+                body = body_str
         else:
-            body = body_str
+            # 事件函数（API网关触发）：body是JSON字符串
+            body_str = event.get('body', '{}')
+            if isinstance(body_str, str):
+                body = json.loads(body_str)
+            else:
+                body = body_str
         
         # 获取请求参数
         method = body.get('method')
